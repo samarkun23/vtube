@@ -24,4 +24,16 @@ app.use(cookieParser())
 
 
 
+
+// routes
+import userRouter from './routes/user.routes.js'
+
+
+//router declaration
+app.use("/api/v1/users", userRouter) //jab router import karoge to get ki place par use ko use karna padega 
+// ab url jo banega vo kuch ase banega http://localhost:8000/api/v1/users/register
+//ismai register call kiya humne 
+
+
+
 export { app  }
