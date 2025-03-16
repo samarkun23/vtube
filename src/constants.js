@@ -1,1 +1,1 @@
-export const DB_NAME = "vtube"
+export const DB_NAME = "vtube" //just a db name because if i want i change it i dont want to change per single file for db name 
