@@ -1,6 +1,8 @@
 // require('dotenv').config({path: './env'})  this code fine but its breaks consitancy of code so we write impove code 
 import dotenv from 'dotenv'
 import connectDB from "./db/index.js"; 
+import { app } from './app.js';
+
 
 dotenv.config({
     path: './env'
