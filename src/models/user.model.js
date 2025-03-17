@@ -49,7 +49,7 @@ const userSchema = new Schema(
 )
 userSchema.pre("save", async function (next) {
     if(!this.isModified("password")) return next(); //with the help of this we can easily detect that password is modified or not when password modified than blow the code id run
-    this.password = bcrypt.hash(this.password, 10)
+    this.password =  await bcrypt.hash(this.password, 10)
     next()
 })//we cannot use arrow function here because in arrow function there is no this function 
 
