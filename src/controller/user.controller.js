@@ -13,15 +13,15 @@ const registerUser = asyncHandler(async(req, res) => {
 
 
     //user details from frontend || agar form ya json data aa rha hai then .body se ayega or agar url se aya to baad mai dekege
-    const {fullName, email, username, password} = req.body
-    console.log("email:", email);
+    const {fullname, email, username, password} = req.body
+    // console.log("email:", email);
 
 
     //validation
 
     //ek ek method par bhi laga sakte ho if if karke
     if(
-        [fullName, email, username, password].some((field) => field?.trim() === "")
+        [fullname, email, username, password].some((field) => field?.trim() === "")
     ){
         throw new ApiError(400, "All field is required")
     }
@@ -29,18 +29,22 @@ const registerUser = asyncHandler(async(req, res) => {
 
 
     //Check user already exit or not
-    const exitedUser = User.findOne({
+    const exitedUser = await User.findOne({
         $or: [{username}, {email}]
     })
 
     if (exitedUser) {
         throw new ApiError(409, "User with email or username already exists")
     }
+    // console.log(req.files);
 
     //Checking images and avatar
     const avatarLocalPath = req.files?.avatar[0]?.path; //ye file li hai humne
-    const coverImageLocalPath = req.files?.coverImage[0]?.path;
-
+    // const coverImageLocalPath = req.files?.coverImage[0]?.path;
+    let coverImageLocalPath;
+    if (req.files && Array.isArray(req.files.coverImage) && req.files.coverImage.length > 0) {
+        coverImageLocalPath = req.files.coverImage[0].path  
+    }
 
     //Checking avatar local path
     if (!avatarLocalPath) {
@@ -60,7 +64,7 @@ const registerUser = asyncHandler(async(req, res) => {
     //create object and enter in database
     //only user is talking to database
     const user = await User.create({
-        fullName,
+        fullname,
         avatar: avatar.url,
         coverImage: coverImage?.url || "",
         email,
@@ -68,7 +72,7 @@ const registerUser = asyncHandler(async(req, res) => {
         username: username.toLowerCase()
     })
     //db jab bhi new user create karta hai tab _id apne aap generate hota hai 
-    const createdUser = User.findById(user._id).select(
+    const createdUser = await User.findById(user._id).select(
         "-password -refreshToken"
     )
 
