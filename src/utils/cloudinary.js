@@ -17,7 +17,8 @@ const uploadOnCloudinary = async (localFilePath) => {
             resource_type: "auto"
         })
         //file has been uploaded successfully
-        console.log("File is uploaded on cloudinary", response.url);
+        // console.log("File is uploaded on cloudinary", response.url); || ye srif testing perpose ke liye tha  
+        fs.unlinkSync(localFilePath) //ab isko unlink kar rahe hai
         return response;
     } catch (error) {
         fs.unlinkSync(localFilePath) //remove the locally saved temperory file as the upload operation got failed 
