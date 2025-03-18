@@ -4,6 +4,30 @@ import {User} from "../models/user.model.js";
 import {uploadOnCloudinary} from "../utils/cloudinary.js";
 import {ApiResponse} from "../utils/ApiResponse.js";
 
+//in current situation we dont have userid || we have generateAccessToken or refreshtoken method in the user.model 
+const generateAccessAndRefreshTokens = async(userId) => {
+    try {
+        const user = await User.findById(userId)
+        const accessToken = user.gegenerateAccessToken()
+        const refreshToken = user.generateRefreshToken()
+
+        //refreshtoken ko database mai dal rahe hai 
+        user.refreshToken = refreshToken
+        await user.save({validateBeforeSave: false}) //mongo db se aya hai .save, to ab jitni baar save karoge utni baar password manga hai so validateBeforeSave: false ab password nhi mangegea 
+
+
+        //now access and refreshtoken return karo
+        return{accessToken,refreshToken}
+
+
+
+    } catch (error) {
+        throw new ApiError(500, "Something went wrong while generating access token")
+    }
+}
+
+
+
 const registerUser = asyncHandler(async(req, res) => {
     //get userdetails from front end 
     // Validation - non empty
@@ -129,7 +153,9 @@ const loginUser =  asyncHandler(async (req, res) => {
     if (!isPasswordValid) {
         throw new ApiError(401, "Password is incorrect")
     }
-    
+
+
+    //now make access and refresh token ye jada  baar call karna padega so lets make its tamplete
 
 })
 
