@@ -188,5 +188,38 @@ const loginUser =  asyncHandler(async (req, res) => {
 
 
 
+//LOGOUT USER
+const logoutUser = asyncHandler(async(req, res) => {
+    //first clear cookies
+    //desing middleware 
+    // req.user ka access hai mere pass ab
+    await User.findByIdAndUpdate(
+        req.user._id,
+        {
+            $set: {
+                refreshToken: undefined
+            }
+        },
+        {
+            new : true
+        }
+    )
+    // refreshToken remove ho gaye hai data base se 
+    const options = {
+        httpOnly: true,
+        secure: true
+    }
+    
+    return res
+    .status(200)
+    .clearCookie("accessToken", options)
+    .clearCookie("refreshToken", options)
+    .json(new ApiResponse(200, {}, "User logged Out"))
+    //ab user ke pass se bhi reomve ho gaya hai
+})
 
-export {registerUser,loginUser}
+
+
+
+
+export {registerUser,loginUser, logoutUser}
