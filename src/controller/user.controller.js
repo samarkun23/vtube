@@ -1,4 +1,4 @@
-import {asyncHandler} from "../utils/asyncHandler.js";;
+import {asyncHandler} from "../utils/asyncHandler.js";
 import {ApiError} from "../utils/ApiError.js";
 import {User} from "../models/user.model.js";
 import {uploadOnCloudinary} from "../utils/cloudinary.js";
@@ -95,4 +95,32 @@ const registerUser = asyncHandler(async(req, res) => {
 
 })
 
-export {registerUser}
+
+
+
+
+const loginUser =  asyncHandler(async (req, res) => {
+//TODOS
+// sabse pahle user se data lo
+//(find)then check karo user hai ki nhi hai
+//if user not than error if yes than check password
+//if password is correct than login if its not corret than error    
+//access and refresh token generate karo or send it to user
+// kaise send karoge cookie ke throw send karo 
+
+
+// DATA 
+    const {email, username, password} = req.body
+    if (!username || !email) {
+        throw new ApiError(400, "username or password is required")
+    }
+    
+    //
+
+
+})
+
+
+
+
+export {registerUser,loginUser}
