@@ -115,7 +115,16 @@ const loginUser =  asyncHandler(async (req, res) => {
         throw new ApiError(400, "username or password is required")
     }
     
-    //
+    //Finding username or email in database 
+    const user = await User.findOne({
+        $or: [{username},{email}]
+    })
+
+    if(!user){
+        throw new ApiError(404, "User doesn't exits")
+    }
+
+    //checking password now 
 
 
 })
