@@ -156,6 +156,33 @@ const loginUser =  asyncHandler(async (req, res) => {
 
 
     //now make access and refresh token ye jada  baar call karna padega so lets make its tamplete
+    const  {accessToken,refreshToken} =  await generateAccessAndRefreshTokens(user._id)
+
+    //data base ko quiry maro ya fir update karo \\ upar wale data jaha liya hai uska user ka token hai vo khali hai
+    const loggedInUser = await User.findById(user._id).select("-password -refreshToken")
+
+    //now we want to send cookies 
+    const options = {
+        httpOnly: true,
+        secure: true   
+    }//cookies jo hoti hai unhe koi bhi modify kar sakta hai but httponly jaise hi laga doge or secure true karoge tab ye cookies srif server se modifible hoti hai 
+
+    //send cookies to user
+    return res
+    .status(200)
+    .cookie("accessToken", accessToken,options)
+    .cookie("refreshToken", refreshToken,options)
+    .json(
+        new ApiResponse(
+            200,
+            {
+                user: loggedInUser, accessToken,refreshToken
+            },
+            "user logged In Successfully"
+        )
+    )
+
+
 
 })
 
