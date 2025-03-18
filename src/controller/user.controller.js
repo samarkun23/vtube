@@ -125,7 +125,11 @@ const loginUser =  asyncHandler(async (req, res) => {
     }
 
     //checking password now 
-
+    const isPasswordValid = await user.isPasswordCorrect(password) //(password ) ye wala aya jo humne abhi user se liya
+    if (!isPasswordValid) {
+        throw new ApiError(401, "Password is incorrect")
+    }
+    
 
 })
 
