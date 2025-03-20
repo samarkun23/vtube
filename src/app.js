@@ -4,6 +4,20 @@ import cookieParser from 'cookie-parser'
 
 const app = express ()
 
+
+//debugging
+// app.use((req, res, next) => {
+//     console.log("New Request Received:");
+//     console.log("Method:", req.method);
+//     console.log("URL:", req.url);
+//     console.log("Headers:", req.headers);
+//     console.log("Body:", req.body);
+//     next();
+// });
+
+
+
+
 //configuring cors 
 app.use(cors({
     origin: process.env.CORS_ORIGIN,

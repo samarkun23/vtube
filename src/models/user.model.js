@@ -53,8 +53,8 @@ userSchema.pre("save", async function (next) {
     next()
 })//we cannot use arrow function here because in arrow function there is no this function 
 
-//Desing custom methods for passwordchecking 
-userSchema.method.isPasswordCorrect = async function (password){
+//Desing custom methods for passwordchecking  
+userSchema.methods.isPasswordCorrect = async function (password){
     return await bcrypt.compare(password, this.password) //IN this process await because of time lagta hai .compare karne mai thats why await 
 }
 
@@ -78,7 +78,7 @@ userSchema.methods.generateRefreshToken = function(){
         {
             _id: this._id,
         },
-        process.env.ACCESS_TOKEN_SECRET,
+        process.env.REFRESH_TOKEN_SECRET,
         {
             expiresIn: process.env.REFRESH_TOKEN_EXPIRY
         }

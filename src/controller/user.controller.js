@@ -3,12 +3,13 @@ import {ApiError} from "../utils/ApiError.js";
 import {User} from "../models/user.model.js";
 import {uploadOnCloudinary} from "../utils/cloudinary.js";
 import {ApiResponse} from "../utils/ApiResponse.js";
+// import { JsonWebTokenError } from "jsonwebtoken";
 
 //in current situation we dont have userid || we have generateAccessToken or refreshtoken method in the user.model 
 const generateAccessAndRefreshTokens = async(userId) => {
     try {
         const user = await User.findById(userId)
-        const accessToken = user.gegenerateAccessToken()
+        const accessToken = user.generateAccessToken()
         const refreshToken = user.generateRefreshToken()
 
         //refreshtoken ko database mai dal rahe hai 
@@ -38,7 +39,7 @@ const registerUser = asyncHandler(async(req, res) => {
 
     //user details from frontend || agar form ya json data aa rha hai then .body se ayega or agar url se aya to baad mai dekege
     const {fullname, email, username, password} = req.body
-    // console.log("email:", email);
+    console.log("email:", email);
 
 
     //validation
@@ -60,7 +61,7 @@ const registerUser = asyncHandler(async(req, res) => {
     if (exitedUser) {
         throw new ApiError(409, "User with email or username already exists")
     }
-    // console.log(req.files);
+    console.log(req.files);
 
     //Checking images and avatar
     const avatarLocalPath = req.files?.avatar[0]?.path; //ye file li hai humne
@@ -124,6 +125,7 @@ const registerUser = asyncHandler(async(req, res) => {
 
 
 const loginUser =  asyncHandler(async (req, res) => {
+    // console.log("Login Request Body : ", req.body);
 //TODOS
 // sabse pahle user se data lo
 //(find)then check karo user hai ki nhi hai
@@ -135,18 +137,24 @@ const loginUser =  asyncHandler(async (req, res) => {
 
 // DATA 
     const {email, username, password} = req.body
+    console.log("Searching for user: ", {email,username})
+
+
     if (!(username || email)) {
         throw new ApiError(400, "username or password is required")
     }
     
     //Finding username or email in database 
     const user = await User.findOne({
-        $or: [{username},{email}]
-    })
+        $or: [{ username },{ email }],
+    });
+    console.log("User found: ", user);
+
 
     if(!user){
-        throw new ApiError(404, "User doesn't exits")
+        throw new ApiError(404, "User doesn't exits");
     }
+    console.log("Found User", user)
 
     //checking password now 
     const isPasswordValid = await user.isPasswordCorrect(password) //(password ) ye wala aya jo humne abhi user se liya
