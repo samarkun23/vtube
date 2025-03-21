@@ -1,12 +1,13 @@
-import {asyncHandler} from "../utils/asyncHandler.js";
-import {ApiError} from "../utils/ApiError.js";
-import {User} from "../models/user.model.js";
-import {uploadOnCloudinary} from "../utils/cloudinary.js";
-import {ApiResponse} from "../utils/ApiResponse.js";
-// import { JsonWebTokenError } from "jsonwebtoken";
+import { asyncHandler } from "../utils/asyncHandler.js";
+import { ApiError } from "../utils/ApiError.js";
+import { User } from "../models/user.model.js";
+import { uploadOnCloudinary } from "../utils/cloudinary.js";
+import { ApiResponse } from "../utils/ApiResponse.js";
+import jwt from "jsonwebtoken"
+import { response } from "express";
 
 //in current situation we dont have userid || we have generateAccessToken or refreshtoken method in the user.model 
-const generateAccessAndRefreshTokens = async(userId) => {
+const generateAccessAndRefreshTokens = async (userId) => {
     try {
         const user = await User.findById(userId)
         const accessToken = user.generateAccessToken()
@@ -14,11 +15,11 @@ const generateAccessAndRefreshTokens = async(userId) => {
 
         //refreshtoken ko database mai dal rahe hai 
         user.refreshToken = refreshToken
-        await user.save({validateBeforeSave: false}) //mongo db se aya hai .save, to ab jitni baar save karoge utni baar password manga hai so validateBeforeSave: false ab password nhi mangegea 
+        await user.save({ validateBeforeSave: false }) //mongo db se aya hai .save, to ab jitni baar save karoge utni baar password manga hai so validateBeforeSave: false ab password nhi mangegea 
 
 
         //now access and refreshtoken return karo
-        return{accessToken,refreshToken}
+        return { accessToken, refreshToken }
 
 
 
@@ -29,7 +30,7 @@ const generateAccessAndRefreshTokens = async(userId) => {
 
 
 
-const registerUser = asyncHandler(async(req, res) => {
+const registerUser = asyncHandler(async (req, res) => {
     //get userdetails from front end 
     // Validation - non empty
     // check if user allready exists: email , username
@@ -38,16 +39,16 @@ const registerUser = asyncHandler(async(req, res) => {
 
 
     //user details from frontend || agar form ya json data aa rha hai then .body se ayega or agar url se aya to baad mai dekege
-    const {fullname, email, username, password} = req.body
+    const { fullname, email, username, password } = req.body
     console.log("email:", email);
 
 
     //validation
 
     //ek ek method par bhi laga sakte ho if if karke
-    if(
+    if (
         [fullname, email, username, password].some((field) => field?.trim() === "")
-    ){
+    ) {
         throw new ApiError(400, "All field is required")
     }
 
@@ -55,7 +56,7 @@ const registerUser = asyncHandler(async(req, res) => {
 
     //Check user already exit or not
     const exitedUser = await User.findOne({
-        $or: [{username}, {email}]
+        $or: [{ username }, { email }]
     })
 
     if (exitedUser) {
@@ -68,7 +69,7 @@ const registerUser = asyncHandler(async(req, res) => {
     // const coverImageLocalPath = req.files?.coverImage[0]?.path;
     let coverImageLocalPath;
     if (req.files && Array.isArray(req.files.coverImage) && req.files.coverImage.length > 0) {
-        coverImageLocalPath = req.files.coverImage[0].path  
+        coverImageLocalPath = req.files.coverImage[0].path
     }
 
     //Checking avatar local path
@@ -124,34 +125,34 @@ const registerUser = asyncHandler(async(req, res) => {
 
 
 
-const loginUser =  asyncHandler(async (req, res) => {
+const loginUser = asyncHandler(async (req, res) => {
     // console.log("Login Request Body : ", req.body);
-//TODOS
-// sabse pahle user se data lo
-//(find)then check karo user hai ki nhi hai
-//if user not than error if yes than check password
-//if password is correct than login if its not corret than error    
-//access and refresh token generate karo or send it to user
-// kaise send karoge cookie ke throw send karo 
+    //TODOS
+    // sabse pahle user se data lo
+    //(find)then check karo user hai ki nhi hai
+    //if user not than error if yes than check password
+    //if password is correct than login if its not corret than error    
+    //access and refresh token generate karo or send it to user
+    // kaise send karoge cookie ke throw send karo 
 
 
-// DATA 
-    const {email, username, password} = req.body
-    console.log("Searching for user: ", {email,username})
+    // DATA 
+    const { email, username, password } = req.body
+    console.log("Searching for user: ", { email, username })
 
 
     if (!(username || email)) {
         throw new ApiError(400, "username or password is required")
     }
-    
+
     //Finding username or email in database 
     const user = await User.findOne({
-        $or: [{ username },{ email }],
+        $or: [{ username }, { email }],
     });
     console.log("User found: ", user);
 
 
-    if(!user){
+    if (!user) {
         throw new ApiError(404, "User doesn't exits");
     }
     console.log("Found User", user)
@@ -164,7 +165,7 @@ const loginUser =  asyncHandler(async (req, res) => {
 
 
     //now make access and refresh token ye jada  baar call karna padega so lets make its tamplete
-    const  {accessToken,refreshToken} =  await generateAccessAndRefreshTokens(user._id)
+    const { accessToken, refreshToken } = await generateAccessAndRefreshTokens(user._id)
 
     //data base ko quiry maro ya fir update karo \\ upar wale data jaha liya hai uska user ka token hai vo khali hai
     const loggedInUser = await User.findById(user._id).select("-password -refreshToken")
@@ -172,23 +173,23 @@ const loginUser =  asyncHandler(async (req, res) => {
     //now we want to send cookies 
     const options = {
         httpOnly: true,
-        secure: true   
+        secure: true
     }//cookies jo hoti hai unhe koi bhi modify kar sakta hai but httponly jaise hi laga doge or secure true karoge tab ye cookies srif server se modifible hoti hai 
 
     //send cookies to user
     return res
-    .status(200)
-    .cookie("accessToken", accessToken,options)
-    .cookie("refreshToken", refreshToken,options)
-    .json(
-        new ApiResponse(
-            200,
-            {
-                user: loggedInUser, accessToken,refreshToken
-            },
-            "user logged In Successfully"
+        .status(200)
+        .cookie("accessToken", accessToken, options)
+        .cookie("refreshToken", refreshToken, options)
+        .json(
+            new ApiResponse(
+                200,
+                {
+                    user: loggedInUser, accessToken, refreshToken
+                },
+                "user logged In Successfully"
+            )
         )
-    )
 
 
 
@@ -197,7 +198,7 @@ const loginUser =  asyncHandler(async (req, res) => {
 
 
 //LOGOUT USER
-const logoutUser = asyncHandler(async(req, res) => {
+const logoutUser = asyncHandler(async (req, res) => {
     //first clear cookies
     //desing middleware 
     // req.user ka access hai mere pass ab
@@ -209,7 +210,7 @@ const logoutUser = asyncHandler(async(req, res) => {
             }
         },
         {
-            new : true
+            new: true
         }
     )
     // refreshToken remove ho gaye hai data base se 
@@ -217,17 +218,66 @@ const logoutUser = asyncHandler(async(req, res) => {
         httpOnly: true,
         secure: true
     }
-    
+
     return res
-    .status(200)
-    .clearCookie("accessToken", options)
-    .clearCookie("refreshToken", options)
-    .json(new ApiResponse(200, {}, "User logged Out"))
+        .status(200)
+        .clearCookie("accessToken", options)
+        .clearCookie("refreshToken", options)
+        .json(new ApiResponse(200, {}, "User logged Out"))
     //ab user ke pass se bhi reomve ho gaya hai
 })
 
 
+//making refresh token controller
+const refreshAccessToken = asyncHandler(async(req, res) => {
+    const incomingRefreshToken = req.cookies.refreshToken || req.body.refreshToken
+    
+    if(incomingRefreshToken){
+        throw new ApiError(401, "unauthorized request")
+    }
+
+    try {
+        const decodedToken = jwt.verify(
+            incomingRefreshToken,
+            process.env.REFRESH_TOKEN_EXPIRY
+        )
+    
+        const user = await User.findById(decodedToken?._id)
+    
+        if(!user){
+            throw new ApiError(401, "Invalid refresh token")
+        }
+    
+        if(incomingRefreshToken !== user?.refreshToken){
+            throw new ApiError(401, "Refresh token is expired or used")
+        }
+    
+        const options = {
+            httpOnly: true,
+            secure: true
+        }
+        const {accessToken, newrefreshToken} = await generateAccessAndRefreshTokens(user._id)
+    
+        return res
+        .status(200)
+        .cookie("accessToken", accessToken, options)
+        .cookie("refreshToken", newrefreshToken, options)
+        .json(
+            new ApiResponse(
+                200,
+                {accessToken, refreshToken: newrefreshToken},
+                "Access token Refreshed"
+            )
+        )
+    } catch (error) {
+        throw new ApiError(401, error?.message || "Invalid refresh token")
+    }
 
 
 
-export {registerUser,loginUser, logoutUser}
+
+})
+
+
+
+export { registerUser, loginUser, logoutUser }
