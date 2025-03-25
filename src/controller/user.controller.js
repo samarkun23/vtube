@@ -5,6 +5,7 @@ import { uploadOnCloudinary } from "../utils/cloudinary.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import jwt from "jsonwebtoken"
 import { response } from "express";
+import mongoose from "mongoose";
 
 //in current situation we dont have userid || we have generateAccessToken or refreshtoken method in the user.model 
 const generateAccessAndRefreshTokens = async (userId) => {
@@ -464,6 +465,65 @@ const getUserChannelProfile = asyncHandler(async(req, res) => {
 
 })
 
+const getWatchHistory = asyncHandler(async(req, res)=>{
+    const user = await User.aggregate([
+        {
+            $match: {
+                _id: new mongoose.Types.ObjectId(req.user._id)                        //req.user.id agar yaha likha to aggregation pipeline ka code sidha hi jata hai so make mongooes object id
+                //user is get now we go to his watch history use lookup
+            }
+        },
+        {
+            $lookup: {
+                from: "videos",
+                localField: "watchHistory",
+                foreignField: "_id",
+                as: "watchHistory",
+                //now we are in that situation ki hamare pass bhaut sare docs aa chuke hai or vo videos aa gaye hai lekin ek sub pipeline bec owner ka kuch nhi milega
+                pipeline:[
+                    {
+                        $lookup: {
+                            from: "users",
+                            localField: "owner",
+                            foreignField: "_id",
+                            as: "owner",
+                             //ab array ke andar multiple value ayi hai like username avatar so ek or pipeline
+                            pipeline: [
+                                {
+                                    $project: {
+                                        fullName: 1,
+                                        username: 1,
+                                        avatar: 1
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    //ab array aya hai or sara data owner ki field mai hai || to muje array sudarana hai 
+                    {
+                        $addFields:{
+                            owner: {
+                                $first: "$owner"
+                            }
+                        }
+                    }
+                ]
+            }
+        }
+    ])
+
+    return res
+    .status(200)
+    .json(
+        new ApiResponse(
+            200,
+            user[0].watchHistory,
+            "Watch history fetched successfully"
+        )
+    )
+})
+
+
 
 export {
     registerUser,
@@ -475,5 +535,6 @@ export {
     updateAccountDetails,
     updateUserAvatar,
     updateUserCoverImage,
-    getUserChannelProfile
+    getUserChannelProfile,
+    getWatchHistory
 }
